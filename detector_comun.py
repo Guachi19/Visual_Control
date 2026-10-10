@@ -16,7 +16,7 @@ def obtener_lado_espejado(nombre_categoria):
     )
 
 
-def ejecutar_camara(procesar_imagen, titulo_ventana):
+def ejecutar_camara(procesar_imagen, titulo_ventana, procesar_tecla=None):
     camara = cv2.VideoCapture(0)
     if not camara.isOpened():
         raise RuntimeError("No se pudo abrir la camara")
@@ -32,14 +32,21 @@ def ejecutar_camara(procesar_imagen, titulo_ventana):
             procesar_imagen(imagen)
             cv2.imshow(titulo_ventana, imagen)
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
+            tecla = cv2.waitKey(1) & 0xFF
+            tecla_consumida = procesar_tecla(tecla) if procesar_tecla else False
+            if tecla == ord("q") and not tecla_consumida:
                 break
     finally:
         camara.release()
         cv2.destroyAllWindows()
 
 
-def ejecutar_detector(procesar_imagen, titulo_ventana, num_manos=2):
+def ejecutar_detector(
+    procesar_imagen,
+    titulo_ventana,
+    num_manos=2,
+    procesar_tecla=None,
+):
     if not RUTA_MODELO.is_file():
         raise FileNotFoundError(
             f"No se encontro el modelo de manos: {RUTA_MODELO}\n"
@@ -63,4 +70,8 @@ def ejecutar_detector(procesar_imagen, titulo_ventana, num_manos=2):
             resultados = detector.detect_for_video(entrada, tiempo_ms)
             procesar_imagen(imagen, resultados)
 
-        ejecutar_camara(procesar_con_detector, titulo_ventana)
+        ejecutar_camara(
+            procesar_con_detector,
+            titulo_ventana,
+            procesar_tecla=procesar_tecla,
+        )
