@@ -262,14 +262,14 @@ def procesar_imagen(imagen, resultados):
             )
         elif MODO_ACTIVO == "OpenClose":
             dedos = (
-                ("Pulgar", 4, None),
-                ("Indice", 8, (5, 6, 7)),
-                ("Medio", 12, (9, 10, 11)),
-                ("Anular", 16, (13, 14, 15)),
-                ("Menique", 20, (17, 18, 19)),
+                ("Pulgar", None),
+                ("Indice", (5, 6, 7)),
+                ("Medio", (9, 10, 11)),
+                ("Anular", (13, 14, 15)),
+                ("Menique", (17, 18, 19)),
             )
             estados = []
-            for nombre, punta, articulaciones in dedos:
+            for nombre, articulaciones in dedos:
                 if articulaciones is None:
                     punto_pulgar = (
                         puntos_mano[4].x * ancho,
@@ -296,38 +296,24 @@ def procesar_imagen(imagen, resultados):
                     )
                 estados.append(extendido)
 
-                punto_punta = puntos_mano[punta]
-                cv2.putText(
-                    imagen,
-                    f"{int(extendido)}",
-                    (
-                        int(punto_punta.x * ancho) + 8,
-                        int(punto_punta.y * alto) - 8,
-                    ),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.65,
-                    (0, 255, 0) if extendido else (0, 0, 255),
-                    2,
-                )
-
             cantidad_dedos_extendidos = sum(estados)
             if cantidad_dedos_extendidos == len(estados):
-                estado_openclose = "Abierta"
+                estado_openclose = "1"
             elif (
                 cantidad_dedos_extendidos
                 <= MAX_DEDOS_EXTENDIDOS_MANO_CERRADA
             ):
-                estado_openclose = "Cerrada"
+                estado_openclose = "0"
             else:
-                estado_openclose = "Intermedia"
+                estado_openclose = "I"
             cv2.putText(
                 imagen,
-                f"OpenClose: {estado_openclose}",
+                estado_openclose,
                 (20, 115),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
+                1.2,
                 (255, 255, 0),
-                2,
+                3,
             )
 
         if MODO_ACTIVO == "Flechas":
@@ -391,15 +377,6 @@ def procesar_imagen(imagen, resultados):
         cv2.FONT_HERSHEY_SIMPLEX,
         0.8,
         (0, 255, 0),
-        2,
-    )
-    cv2.putText(
-        imagen,
-        f"Modo: {MODO_ACTIVO} | Toca pulgar-menique para cambiar",
-        (20, 80),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.65,
-        (255, 255, 0),
         2,
     )
     if FLECHA_VISIBLE is not None:
