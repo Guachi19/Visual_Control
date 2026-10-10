@@ -20,6 +20,7 @@ CLIC_IZQUIERDO_ACTIVO = False
 CLIC_DERECHO_ACTIVO = False
 FLECHA_VISIBLE = None
 FLECHAS_ARMADA = False
+ULTIMO_PORCENTAJE = None
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.GetSystemMetrics.argtypes = [ctypes.c_int]
@@ -145,6 +146,7 @@ def procesar_imagen(imagen, resultados):
     global MODO_ACTIVO, SELECTOR_ACTIVO
     global CLIC_IZQUIERDO_ACTIVO, CLIC_DERECHO_ACTIVO
     global FLECHA_VISIBLE, FLECHAS_ARMADA
+    global ULTIMO_PORCENTAJE
 
     alto, ancho = imagen.shape[:2]
     mano_izquierda_detectada = False
@@ -250,15 +252,8 @@ def procesar_imagen(imagen, resultados):
                 2,
             )
         elif MODO_ACTIVO == "Porcentual":
-            porcentaje = calcular_porcentaje_pellizco(puntos_mano, ancho, alto)
-            cv2.putText(
-                imagen,
-                f"Porcentual: {porcentaje}%",
-                (20, 115),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (255, 255, 0),
-                2,
+            ULTIMO_PORCENTAJE = calcular_porcentaje_pellizco(
+                puntos_mano, ancho, alto
             )
         elif MODO_ACTIVO == "OpenClose":
             dedos = (
@@ -402,6 +397,16 @@ def procesar_imagen(imagen, resultados):
         (255, 255, 0),
         2,
     )
+    if ULTIMO_PORCENTAJE is not None:
+        cv2.putText(
+            imagen,
+            f"Ultimo porcentual: {ULTIMO_PORCENTAJE}%",
+            (20, 115),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (255, 255, 0),
+            2,
+        )
     if FLECHA_VISIBLE is not None:
         cv2.putText(
             imagen,
