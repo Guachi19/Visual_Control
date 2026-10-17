@@ -1,3 +1,5 @@
+"""Entrena y evalúa el clasificador LSC a partir del CSV de landmarks."""
+
 import csv
 from collections import Counter
 
@@ -11,6 +13,15 @@ FRACCION_PRUEBA = 0.2
 
 
 def cargar_datos():
+    """Lee el CSV y valida etiquetas, dimensiones y valores numéricos.
+
+    Returns:
+        Tupla ``(caracteristicas, etiquetas)`` en arreglos NumPy.
+
+    Raises:
+        FileNotFoundError: Si no existe ``datos_lsc.csv``.
+        ValueError: Si el encabezado o alguna fila contiene datos inválidos.
+    """
     if not RUTA_DATOS.is_file():
         raise FileNotFoundError(f"No se encontro el archivo de datos: {RUTA_DATOS}")
 
@@ -49,6 +60,15 @@ def cargar_datos():
 
 
 def evaluar(caracteristicas, etiquetas):
+    """Mide exactitud con una división aleatoria estratificada por etiqueta.
+
+    Args:
+        caracteristicas: Matriz de ejemplos, con 63 valores por fila.
+        etiquetas: Etiquetas alineadas fila por fila con la matriz.
+
+    Returns:
+        Tupla con la proporción de aciertos y la cantidad de ejemplos de prueba.
+    """
     rng = np.random.default_rng(RNG_SEMILLA)
     indices_entrenamiento = []
     indices_prueba = []
@@ -79,6 +99,7 @@ def evaluar(caracteristicas, etiquetas):
 
 
 def entrenar():
+    """Evalúa todos los datos y guarda el modelo final en formato NPZ."""
     caracteristicas, etiquetas = cargar_datos()
     if caracteristicas.shape[1] != NUM_CARACTERISTICAS:
         raise ValueError("Cada ejemplo debe contener 63 landmarks normalizados")

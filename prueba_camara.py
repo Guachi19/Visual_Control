@@ -1,3 +1,5 @@
+"""Prueba mínima para confirmar que la cámara puede abrirse."""
+
 from detector_comun import ejecutar_camara
 
 

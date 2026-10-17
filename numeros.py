@@ -1,3 +1,5 @@
+"""Detecta la mano derecha y muestra sus dedos como número binario."""
+
 import math
 
 import cv2
@@ -6,8 +8,29 @@ from mediapipe.tasks.python import vision
 
 from detector_comun import ejecutar_detector, obtener_lado_espejado
 
+UMBRALES_EXTENSION = {
+    "I": 170,
+    "C": 170,
+    "A": 155,
+    "M": 170,
+}
+MARGEN_EXTENSION_PULGAR = 0.25
+
 
 def angulo_articulacion(puntos_mano, inicio, articulacion, fin, ancho, alto):
+    """Calcula el ángulo en una articulación usando coordenadas de píxel.
+
+    Args:
+        puntos_mano: Landmarks de la mano detectada por MediaPipe.
+        inicio: Índice del landmark anterior a la articulación.
+        articulacion: Índice del landmark que forma el vértice del ángulo.
+        fin: Índice del landmark posterior a la articulación.
+        ancho: Ancho del frame en píxeles.
+        alto: Alto del frame en píxeles.
+
+    Returns:
+        Ángulo en grados entre los dos segmentos.
+    """
     punto_a = (
         puntos_mano[inicio].x * ancho,
         puntos_mano[inicio].y * alto,
@@ -33,6 +56,12 @@ def angulo_articulacion(puntos_mano, inicio, articulacion, fin, ancho, alto):
 
 
 def procesar_imagen(imagen, resultados):
+    """Dibuja la mano derecha y convierte dedos extendidos en valor binario.
+
+    Args:
+        imagen: Frame BGR sobre el que se dibujan la mano y el resultado.
+        resultados: Resultado de MediaPipe con landmarks y lateralidad.
+    """
     alto, ancho = imagen.shape[:2]
     mano_derecha_detectada = False
     contador_binario = None
@@ -56,6 +85,10 @@ def procesar_imagen(imagen, resultados):
                 for indice in (0, 5, 9, 13, 17)
             ],
             dtype=np.int32,
+        )
+        ancho_palma = math.hypot(
+            (puntos_mano[5].x - puntos_mano[17].x) * ancho,
+            (puntos_mano[5].y - puntos_mano[17].y) * alto,
         )
         cv2.polylines(
             imagen,
@@ -90,14 +123,17 @@ def procesar_imagen(imagen, resultados):
                     puntos_mano[4].x * ancho,
                     puntos_mano[4].y * alto,
                 )
-                extendido = cv2.pointPolygonTest(
+                distancia_contorno = cv2.pointPolygonTest(
                     contorno_palma,
                     punta_pulgar,
-                    False,
-                ) < 0
+                    True,
+                )
+                extendido = (
+                    distancia_contorno
+                    < -MARGEN_EXTENSION_PULGAR * ancho_palma
+                )
             else:
                 inicio, articulacion, fin = articulaciones
-                umbral_extension = 145 if nombre == "A" else 160
                 extendido = (
                     angulo_articulacion(
                         puntos_mano,
@@ -107,7 +143,7 @@ def procesar_imagen(imagen, resultados):
                         ancho,
                         alto,
                     )
-                    >= umbral_extension
+                    >= UMBRALES_EXTENSION[nombre]
                 )
             bits.append(int(extendido))
 

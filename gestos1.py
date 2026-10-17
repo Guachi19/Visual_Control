@@ -1,3 +1,5 @@
+"""Reconoce gestos de la mano izquierda para mouse, porcentual y flechas."""
+
 import ctypes
 from ctypes import wintypes
 import math
@@ -29,6 +31,8 @@ user32.SetCursorPos.restype = ctypes.c_bool
 
 
 class EntradaMouse(ctypes.Structure):
+    """Estructura de Windows para describir un evento de mouse."""
+
     _fields_ = (
         ("dx", wintypes.LONG),
         ("dy", wintypes.LONG),
@@ -40,10 +44,14 @@ class EntradaMouse(ctypes.Structure):
 
 
 class UnionEntrada(ctypes.Union):
+    """Unión de datos de entrada usada por la API SendInput de Windows."""
+
     _fields_ = (("mi", EntradaMouse),)
 
 
 class Entrada(ctypes.Structure):
+    """Estructura completa de evento que recibe SendInput."""
+
     _fields_ = (("type", wintypes.DWORD), ("union", UnionEntrada))
 
 
@@ -69,6 +77,15 @@ if ANCHO_PANTALLA <= 0 or ALTO_PANTALLA <= 0:
 
 
 def mover_cursor(punta_indice):
+    """Mueve el cursor de Windows a la posición normalizada del índice.
+
+    Args:
+        punta_indice: Landmark del índice con coordenadas ``x`` e ``y``
+            normalizadas entre 0 y 1.
+
+    Raises:
+        OSError: Si Windows no permite mover el cursor.
+    """
     x_normalizado = max(0.0, min(1.0, punta_indice.x))
     y_normalizado = max(0.0, min(1.0, punta_indice.y))
     x = round(x_normalizado * (ANCHO_PANTALLA - 1))
@@ -78,6 +95,15 @@ def mover_cursor(punta_indice):
 
 
 def hacer_clic(flags):
+    """Envía uno o más eventos de botón del mouse mediante Windows.
+
+    Args:
+        flags: Secuencia de banderas de evento, por ejemplo presionar y soltar
+            el botón izquierdo o derecho.
+
+    Raises:
+        OSError: Si Windows no recibe todos los eventos solicitados.
+    """
     entradas = (Entrada * len(flags))()
     for entrada, flag in zip(entradas, flags):
         entrada.type = 0
@@ -92,6 +118,14 @@ def hacer_clic(flags):
 
 
 def distancia_entre(punto_a, punto_b, ancho, alto):
+    """Calcula distancia euclidiana entre dos landmarks, en píxeles.
+
+    Args:
+        punto_a: Primer landmark con coordenadas ``x`` e ``y`` normalizadas.
+        punto_b: Segundo landmark con coordenadas ``x`` e ``y`` normalizadas.
+        ancho: Ancho del frame en píxeles.
+        alto: Alto del frame en píxeles.
+    """
     return math.hypot(
         (punto_a.x - punto_b.x) * ancho,
         (punto_a.y - punto_b.y) * alto,
@@ -99,6 +133,18 @@ def distancia_entre(punto_a, punto_b, ancho, alto):
 
 
 def calcular_porcentaje_pellizco(puntos_mano, ancho, alto):
+    """Convierte la separación pulgar-índice en porcentaje, en saltos de 5.
+
+    Args:
+        puntos_mano: Landmarks de una mano, con las puntas del pulgar e índice
+            en los índices 4 y 8.
+        ancho: Ancho del frame en píxeles.
+        alto: Alto del frame en píxeles.
+
+    Returns:
+        Porcentaje entero entre 0 y 100, redondeado hacia arriba al siguiente
+        múltiplo de cinco.
+    """
     distancia_pellizco = distancia_entre(
         puntos_mano[4], puntos_mano[8], ancho, alto
     )
@@ -117,6 +163,19 @@ def calcular_porcentaje_pellizco(puntos_mano, ancho, alto):
 
 
 def angulo_articulacion(puntos_mano, inicio, articulacion, fin, ancho, alto):
+    """Calcula en grados el ángulo formado por tres landmarks de un dedo.
+
+    Args:
+        puntos_mano: Landmarks de la mano.
+        inicio: Índice del primer punto del ángulo.
+        articulacion: Índice del vértice del ángulo.
+        fin: Índice del último punto del ángulo.
+        ancho: Ancho del frame en píxeles.
+        alto: Alto del frame en píxeles.
+
+    Returns:
+        Ángulo entre los segmentos en grados.
+    """
     punto_a = (
         puntos_mano[inicio].x * ancho,
         puntos_mano[inicio].y * alto,
@@ -142,6 +201,15 @@ def angulo_articulacion(puntos_mano, inicio, articulacion, fin, ancho, alto):
 
 
 def procesar_imagen(imagen, resultados):
+    """Procesa gestos de la mano izquierda según el modo activo.
+
+    Args:
+        imagen: Frame BGR sobre el que se dibujan resultados y guías.
+        resultados: Resultado de MediaPipe con landmarks y lateralidad.
+
+    Efectos:
+        Puede mover el cursor, generar clics o imprimir flechas según el modo.
+    """
     global MODO_ACTIVO, SELECTOR_ACTIVO
     global CLIC_IZQUIERDO_ACTIVO, CLIC_DERECHO_ACTIVO
     global FLECHA_VISIBLE, FLECHAS_ARMADA

@@ -1,3 +1,5 @@
+"""Visualiza y clasifica las señas estáticas de la mano derecha en LSC."""
+
 import cv2
 from mediapipe.tasks.python import vision
 
@@ -6,7 +8,21 @@ from lsc_clasificador import ClasificadorLSC, normalizar_landmarks
 
 
 def crear_procesador(clasificador):
+    """Crea el callback por frame que dibuja y clasifica la mano derecha.
+
+    Args:
+        clasificador: Instancia de :class:`ClasificadorLSC` ya cargada.
+
+    Returns:
+        Función ``(imagen, resultados)`` compatible con ``ejecutar_detector``.
+    """
     def procesar_imagen(imagen, resultados):
+        """Dibuja landmarks y la predicción de la mano derecha detectada.
+
+        Args:
+            imagen: Frame BGR sobre el que se dibuja.
+            resultados: Resultado de MediaPipe con landmarks y lateralidad.
+        """
         alto, ancho = imagen.shape[:2]
         mano_derecha_detectada = False
 

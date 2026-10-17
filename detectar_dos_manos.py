@@ -1,3 +1,5 @@
+"""Ejemplo para mostrar hasta dos manos y su lateralidad."""
+
 import cv2
 from mediapipe.tasks.python import vision
 
@@ -5,6 +7,12 @@ from detector_comun import ejecutar_detector, obtener_lado_espejado
 
 
 def procesar_imagen(imagen, resultados):
+    """Dibuja landmarks, lado y cantidad de manos detectadas.
+
+    Args:
+        imagen: Frame BGR sobre el que se dibuja.
+        resultados: Resultado de MediaPipe, incluyendo landmarks y lados.
+    """
     alto, ancho = imagen.shape[:2]
 
     for indice, puntos_mano in enumerate(resultados.hand_landmarks):

@@ -1,3 +1,5 @@
+"""Ejemplo de detección y dibujo de una sola mano con MediaPipe."""
+
 import cv2
 from mediapipe.tasks.python import vision
 
@@ -5,6 +7,12 @@ from detector_comun import ejecutar_detector
 
 
 def procesar_imagen(imagen, resultados):
+    """Dibuja los landmarks detectados en el frame.
+
+    Args:
+        imagen: Frame BGR sobre el que se dibuja.
+        resultados: Resultado de MediaPipe para el frame actual.
+    """
     alto, ancho = imagen.shape[:2]
     for puntos_mano in resultados.hand_landmarks:
         for conexion in vision.HandLandmarksConnections.HAND_CONNECTIONS:

@@ -1,3 +1,5 @@
+"""Captura ejemplos etiquetados de la mano derecha para el alfabeto LSC."""
+
 import csv
 from collections import Counter
 from pathlib import Path
@@ -18,7 +20,16 @@ COLUMNAS.extend(
 
 
 class CapturadorLSC:
+    """Mantiene etiqueta, conteos y landmarks durante una sesión de captura."""
+
     def __init__(self, writer, archivo):
+        """Prepara el capturador y carga los conteos guardados previamente.
+
+        Args:
+            writer: Escritor CSV que recibe cada nuevo ejemplo.
+            archivo: Archivo CSV abierto en modo anexar, que se vacía tras
+                guardar cada fila para conservar los datos ante un cierre.
+        """
         self.writer = writer
         self.archivo = archivo
         self.etiqueta = ""
@@ -31,6 +42,7 @@ class CapturadorLSC:
         self.cargar_conteos_existentes()
 
     def cargar_conteos_existentes(self):
+        """Lee cuántos ejemplos hay por etiqueta y valida el encabezado."""
         if not RUTA_DATOS.is_file() or RUTA_DATOS.stat().st_size == 0:
             return
 
@@ -45,6 +57,12 @@ class CapturadorLSC:
             self.conteos.update(fila["etiqueta"] for fila in lector)
 
     def procesar_imagen(self, imagen, resultados):
+        """Actualiza landmarks de la mano derecha y dibuja el estado actual.
+
+        Args:
+            imagen: Frame BGR sobre el que se dibuja la vista de captura.
+            resultados: Landmarks y lateralidad detectados por MediaPipe.
+        """
         alto, ancho = imagen.shape[:2]
         self.landmarks_actuales = None
         self.confianza_actual = 0.0
@@ -132,6 +150,15 @@ class CapturadorLSC:
         )
 
     def procesar_tecla(self, tecla):
+        """Edita la etiqueta o guarda el ejemplo según la tecla recibida.
+
+        Args:
+            tecla: Código de tecla de OpenCV; Enter edita/acepta etiqueta,
+                ``C`` captura y ``Esc`` cancela la edición.
+
+        Returns:
+            ``True`` si la tecla fue consumida por el capturador.
+        """
         if self.editando_etiqueta:
             if tecla in (10, 13):
                 etiqueta = self.texto_etiqueta.strip().lower()
@@ -192,6 +219,11 @@ class CapturadorLSC:
 
 
 def iniciar_captura():
+    """Valida o crea el CSV y abre la cámara para capturar ejemplos LSC.
+
+    Los landmarks se guardan localmente en ``datos_lsc.csv``; no se guardan
+    fotogramas ni imágenes.
+    """
     archivo_existe = RUTA_DATOS.exists() and RUTA_DATOS.stat().st_size > 0
     if archivo_existe:
         with RUTA_DATOS.open("r", newline="", encoding="utf-8") as entrada:
